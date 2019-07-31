@@ -1,0 +1,162 @@
+config system global
+    set hostname "FortiDEMO_AWS"
+end
+config system admin
+        edit admin
+        set password "${admin_pass}"
+end
+config system interface
+    edit "port1"
+        set vdom "root"
+        set mode dhcp
+        set allowaccess ping https ssh fgfm
+    next
+    edit "port2"
+        set vdom "root"
+        set mode dhcp
+        set allowaccess ping ssh
+        set scan-botnet-connections monitor
+        set device-identification enable
+        set defaultgw disable
+    next
+end
+config firewall vip
+    edit "ToUbuntuVIP"
+        set comment "VIP to Ubuntu"
+        set extintf "port1"
+        set portforward enable
+        set mappedip "${ubuntu_instance_ip}"
+        set extport 22
+        set mappedport 22
+    next
+end
+config firewall address
+    edit "FortiDEMO_local_subnet_1"
+        set allow-routing enable
+        set subnet 10.0.1.0 255.255.255.0
+    next
+    edit "FortiDEMO_remote_subnet_1"
+        set allow-routing enable
+        set subnet 10.100.88.0 255.255.255.0
+    next
+end
+config firewall addrgrp
+    edit "FortiDEMO_local"
+        set member "FortiDEMO_local_subnet_1"
+        set allow-routing enable
+    next
+    edit "FortiDEMO_remote"
+        set member "FortiDEMO_remote_subnet_1"
+        set allow-routing enable
+    next
+end
+config vpn ipsec phase1-interface
+    edit "FortiDEMO"
+        set interface "port1"
+        set peertype any
+        set net-device enable
+        set proposal aes128-sha256 aes256-sha256 aes128-sha1 aes256-sha1
+        set wizard-type static-fortigate
+        set remote-gw "${forti_demo_ip}"
+        set psksecret fortidemo
+    next
+end
+config vpn ipsec phase2-interface
+    edit "FortiDEMO"
+        set phase1name "FortiDEMO"
+        set proposal aes128-sha1 aes256-sha1 aes128-sha256 aes256-sha256 aes128gcm aes256gcm chacha20poly1305
+        set src-addr-type name
+        set dst-addr-type name
+        set src-name "FortiDEMO_local"
+        set dst-name "FortiDEMO_remote"
+    next
+end
+config firewall policy
+    edit 0
+        set name "vpn_FortiDEMO_local"
+        set srcintf "port1"
+        set dstintf "FortiDEMO"
+        set srcaddr "FortiDEMO_local"
+        set dstaddr "FortiDEMO_remote"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+    next
+    edit 0
+        set name "vpn_FortiDEMO_remote"
+        set srcintf "FortiDEMO"
+        set dstintf "port1"
+        set srcaddr "FortiDEMO_remote"
+        set dstaddr "FortiDEMO_local"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+    next
+end
+config router static
+    edit 1
+        set device "FortiDEMO"
+        set dstaddr "FortiDEMO_remote"
+    next
+    edit 2
+        set distance 254
+        set blackhole enable
+        set dstaddr "FortiDEMO_remote"
+    next
+end
+
+config firewall policy
+    edit 1
+        set srcintf "port1"
+        set dstintf "port1"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set nat enable
+    next
+    edit 3
+        set name "ToUbuntu"
+        set srcintf "port1"
+        set dstintf "port2"
+        set srcaddr "all"
+        set dstaddr "ToUbuntuVIP"
+        set action accept
+        set schedule "always"
+        set service "HTTP" "SSH"
+        set utm-status enable
+        set fixedport enable
+        set fsso disable
+        set av-profile "default"
+        set ssl-ssh-profile "certificate-inspection"
+        set nat enable
+    next
+    edit 4
+        set name "UbuntuEgress"
+        set srcintf "port2"
+        set dstintf "port1"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set utm-status enable
+        set fsso disable
+        set av-profile "default"
+        set ssl-ssh-profile "certificate-inspection"
+        set nat enable
+    next
+end
+config system csf
+    set status enable
+    set upstream-ip 10.100.88.1
+    set management-ip "${aws_eip}"
+    set management-port 443
+end
+config system sdn-connector
+    edit "aws_sdn"
+        set type aws
+        set use-metadata-iam enable
+    next
+end
