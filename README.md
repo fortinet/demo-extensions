@@ -24,7 +24,7 @@ Terraform deploys the following components:
 To deploy the FortiDemo Inspector:
 
   1. Clone the repository.
-  2. Change to the demo-extensions directory and initialize the providers and modules:
+  2. Change to the cloned directory and initialize the providers and modules:
 
      ```sh
      $ cd fortidemo-inspector
@@ -41,7 +41,7 @@ To deploy the FortiDemo Inspector:
   5. Confirm and apply the plan:
 
      ```sh
-     $ terraform apply
+     $ terraform apply -var "access_key=<access_key>" -var "secret_key=<secret_key>" -var "fortidemo_ip=<ip_address>"
      ```
 
   6. If output is satisfactory, type `yes`.
@@ -50,7 +50,7 @@ To deploy the FortiDemo Inspector:
 To destroy the cluster, use the command:
 
 ```sh
-$ terraform destroy
+$ terraform destroy -var "access_key=<access_key>" -var "secret_key=<secret_key>"
 ```
 
 ## Additional information
@@ -64,4 +64,3 @@ For other questions related to this project, contact [github@fortinet.com](mailt
 
 ## License
 [License](https://github.com/fortinet/demo-extensions/blob/master/LICENSE) © Fortinet Technologies. All rights reserved.
-
