@@ -9,6 +9,8 @@ variable "region" {
     default = "us-west-1" //Default Region
 
 }
+data "aws_caller_identity" "current" {}
+
 variable "access_key"{
   type = "string"
   default = ""
@@ -95,6 +97,7 @@ resource "aws_vpc" "main_vpc" {
   tags = {
       Name = "${var.cluster_name}-VPC-Main-${random_string.random_name_post.result}"
       Type = "FortiDemo"
+      Account = "${data.aws_caller_identity.current.arn}"
   }
 }
 
@@ -107,6 +110,8 @@ resource "aws_subnet" "main" {
   tags = {
     Name = "${var.cluster_name}-Subnet-Main-${random_string.random_name_post.result}"
     Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+
   }
 }
 
@@ -393,6 +398,8 @@ resource "aws_instance" "ubuntu_instance" {
     env = "Inspector-${random_string.random_name_post.result}"
     ManagedBy = "Terraform"
     Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+
 
   } //Calling as a file makes syntax easier.
   user_data = "${data.template_file.cloud-init.rendered}"
