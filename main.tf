@@ -94,6 +94,7 @@ resource "aws_vpc" "main_vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
       Name = "${var.cluster_name}-VPC-Main-${random_string.random_name_post.result}"
+      Type = "FortiDemo"
   }
 }
 
@@ -105,6 +106,7 @@ resource "aws_subnet" "main" {
 
   tags = {
     Name = "${var.cluster_name}-Subnet-Main-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 
@@ -116,6 +118,7 @@ resource "aws_subnet" "secondary" {
 
   tags = {
     Name = "${var.cluster_name}-Subnet-Secondary-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 
@@ -287,6 +290,7 @@ resource "aws_nat_gateway" "gw" {
 
   tags = {
     Name = "${var.cluster_name}-NatGateway-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 resource "aws_eip" "fortigate_eip_nat_gateway" {
@@ -301,6 +305,7 @@ resource "aws_internet_gateway" "gw" {
 
   tags = {
     Name = "${var.cluster_name}-IGW-Main-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 
@@ -317,6 +322,7 @@ resource "aws_route_table" "public_gateway_route" {
   //  Use our common tags and add a specific name.
   tags = {
       Name = "${var.cluster_name}-Public-Route-${random_string.random_name_post.result}"
+      Type = "FortiDemo"
 
   }
 
@@ -333,6 +339,7 @@ resource "aws_route_table" "nat_gateway_route" {
   //  Use our common tags and add a specific name.
   tags = {
       Name = "${var.cluster_name}-NatGateway-Route-${random_string.random_name_post.result}"
+      Type = "FortiDemo"
 
   }
 
@@ -353,6 +360,7 @@ resource "aws_s3_bucket" "s3_bucket" {
   acl    = "public-read"
   tags = {
     Name   = "${var.cluster_name}-s3-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 
@@ -384,6 +392,7 @@ resource "aws_instance" "ubuntu_instance" {
     Name = "${var.cluster_name}-Ubuntu-Instance-${random_string.random_name_post.result}"
     env = "Inspector-${random_string.random_name_post.result}"
     ManagedBy = "Terraform"
+    Type = "FortiDemo"
 
   } //Calling as a file makes syntax easier.
   user_data = "${data.template_file.cloud-init.rendered}"
@@ -405,6 +414,7 @@ resource "aws_network_interface" "fgt_primary_nic" {
   subnet_id   = "${aws_subnet.main.id}"
   tags = {
     Name = "primary_network_interface"
+    Type = "FortiDemo"
   }
 }
 //Secondary nic
@@ -415,6 +425,7 @@ resource "aws_network_interface" "fgt_second_nic" {
   source_dest_check = false
   tags = {
     Name = "secondary_network_interface"
+    Type = "FortiDemo"
   }
     attachment {
     instance     = "${aws_instance.fortigate.id}"
@@ -432,6 +443,7 @@ resource "aws_instance" "fortigate" {
   user_data = "${data.template_file.setup-nat-eip.rendered}"
   tags =  {
     Name = "${var.cluster_name}-FortiGate-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 //FortiGate EIP
@@ -439,6 +451,7 @@ resource "aws_eip" "fortigate_eip" {
   vpc = true
   tags = {
     Name = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
+    Type = "FortiDemo"
   }
 }
 resource "aws_eip_association" "eip_association" {
