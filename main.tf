@@ -96,8 +96,8 @@ resource "aws_vpc" "main_vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
       Name = "${var.cluster_name}-VPC-Main-${random_string.random_name_post.result}"
-      Type = "FortiDemo"
       Account = "${data.aws_caller_identity.current.arn}"
+      Type = "FortiDemo-Terraform"
   }
 }
 
@@ -109,7 +109,7 @@ resource "aws_subnet" "main" {
 
   tags = {
     Name = "${var.cluster_name}-Subnet-Main-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Type = "FortiDemo-Terraform"
     Account = "${data.aws_caller_identity.current.arn}"
 
   }
@@ -123,7 +123,8 @@ resource "aws_subnet" "secondary" {
 
   tags = {
     Name = "${var.cluster_name}-Subnet-Secondary-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Type = "FortiDemo-Terraform"
+    Account = "${data.aws_caller_identity.current.arn}"
   }
 }
 
@@ -149,6 +150,8 @@ resource "aws_security_group" "allow_all" {
 }
   tags = {
     Name = "${var.cluster_name}-Sec-Group-Allow-Ingress-${random_string.random_name_post.result}"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 //Define the IAM role for the ec2
@@ -295,13 +298,16 @@ resource "aws_nat_gateway" "gw" {
 
   tags = {
     Name = "${var.cluster_name}-NatGateway-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 resource "aws_eip" "fortigate_eip_nat_gateway" {
     vpc = true
     tags= {
-     Name = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
+    Name = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
     }
 }
 
@@ -310,7 +316,8 @@ resource "aws_internet_gateway" "gw" {
 
   tags = {
     Name = "${var.cluster_name}-IGW-Main-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 
@@ -327,7 +334,8 @@ resource "aws_route_table" "public_gateway_route" {
   //  Use our common tags and add a specific name.
   tags = {
       Name = "${var.cluster_name}-Public-Route-${random_string.random_name_post.result}"
-      Type = "FortiDemo"
+      Account = "${data.aws_caller_identity.current.arn}"
+      Type = "FortiDemo-Terraform"
 
   }
 
@@ -344,7 +352,8 @@ resource "aws_route_table" "nat_gateway_route" {
   //  Use our common tags and add a specific name.
   tags = {
       Name = "${var.cluster_name}-NatGateway-Route-${random_string.random_name_post.result}"
-      Type = "FortiDemo"
+      Account = "${data.aws_caller_identity.current.arn}"
+      Type = "FortiDemo-Terraform"
 
   }
 
@@ -365,7 +374,8 @@ resource "aws_s3_bucket" "s3_bucket" {
   acl    = "public-read"
   tags = {
     Name   = "${var.cluster_name}-s3-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 
@@ -397,7 +407,8 @@ resource "aws_instance" "ubuntu_instance" {
     Name = "${var.cluster_name}-Ubuntu-Instance-${random_string.random_name_post.result}"
     env = "Inspector-${random_string.random_name_post.result}"
     ManagedBy = "Terraform"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
     Account = "${data.aws_caller_identity.current.arn}"
 
 
@@ -421,7 +432,8 @@ resource "aws_network_interface" "fgt_primary_nic" {
   subnet_id   = "${aws_subnet.main.id}"
   tags = {
     Name = "primary_network_interface"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 //Secondary nic
@@ -432,7 +444,8 @@ resource "aws_network_interface" "fgt_second_nic" {
   source_dest_check = false
   tags = {
     Name = "secondary_network_interface"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
     attachment {
     instance     = "${aws_instance.fortigate.id}"
@@ -450,7 +463,8 @@ resource "aws_instance" "fortigate" {
   user_data = "${data.template_file.setup-nat-eip.rendered}"
   tags =  {
     Name = "${var.cluster_name}-FortiGate-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 //FortiGate EIP
@@ -458,7 +472,8 @@ resource "aws_eip" "fortigate_eip" {
   vpc = true
   tags = {
     Name = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
-    Type = "FortiDemo"
+    Account = "${data.aws_caller_identity.current.arn}"
+    Type = "FortiDemo-Terraform"
   }
 }
 resource "aws_eip_association" "eip_association" {
