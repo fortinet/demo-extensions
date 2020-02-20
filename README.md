@@ -5,7 +5,7 @@
 ## Requirements
 * [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.11
 * An [AWS access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)
-* FortiOS 6.2.1
+* FortiOS 6.2.3
 
 
 ## Deployment overview
