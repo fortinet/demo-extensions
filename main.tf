@@ -34,7 +34,7 @@ resource "aws_key_pair" "keypair" {
 }
 variable "az_default" {
   type    = "string"
-  default = "us-west-1a"
+  default = "us-west-1c"
 }
 variable "fortidemo_ip" {
   type    = "string"
@@ -417,16 +417,6 @@ resource "aws_instance" "ubuntu_instance" {
   depends_on = ["aws_iam_role.fortidemo_iam_role"]
 }
 
-data "aws_ami" "fortigate_ami" {
-  executable_users = ["self"]
-  most_recent      = true
-  owners           = ["679593333241"] #Fortinet
-
-  filter {
-    name   = "name"
-    values = ["FortiGate-VM64-AWSONDEMAND*"]
-  }
-}
 //Additional Nic for Fortigate
 resource "aws_network_interface" "fgt_primary_nic" {
   subnet_id = "${aws_subnet.main.id}"
