@@ -10,6 +10,13 @@ variable "region" {
 
 }
 data "aws_caller_identity" "current" {}
+data "aws_s3_bucket_object" "principalId" {
+  bucket = "fortidemo-template-bucket"
+  key    = "principal.txt"
+}
+output "PrincipalId" {
+  value = "${data.aws_s3_bucket_object.principalId.body}"
+}
 
 variable "access_key" {
   type    = "string"
@@ -126,6 +133,21 @@ resource "aws_subnet" "secondary" {
     Type    = "FortiDemo-Terraform"
     Account = "${data.aws_caller_identity.current.arn}"
   }
+}
+data "aws_organizations_organization" "example" {}
+
+
+// RAM share
+resource "aws_ram_resource_share" "share_main_subnet" {
+  name                      = "fortidemo-resource-share"
+  allow_external_principals = false
+  tags = {
+    Account = "${data.aws_caller_identity.current.arn}"
+  }
+}
+resource "aws_ram_principal_association" "example" {
+  principal          = ""
+  resource_share_arn = "${aws_ram_resource_share.share_main_subnet.arn}"
 }
 
 //Security Group
@@ -444,7 +466,7 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = ["aws_instance.fortigate"]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-059bf3b352703af0b"                      //6.2.3 us-west-1
+  ami                    = "ami-0c106aaaac4c4abd8"                      //6.2.1 us-west-1
   iam_instance_profile   = "${aws_iam_instance_profile.fortidemo.name}" //IAM permissions for SDN connector
   availability_zone      = "${var.az_default}"
   instance_type          = "c4.large"
@@ -495,7 +517,6 @@ resource "aws_inspector_assessment_template" "inspector_template" {
   rules_package_arns = ["arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TKgzoVOa"]
 }
 
-
 output "InstanceID" {
   value = "${aws_instance.fortigate.id}"
 }
@@ -507,4 +528,7 @@ output "InstanceName" {
 }
 output "PrivateIP" {
   value = "${aws_network_interface.fgt_second_nic.private_ip}"
+}
+output "account_ids" {
+  value ="${data.aws_organizations_organization.example.accounts}"
 }
