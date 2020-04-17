@@ -1,8 +1,8 @@
 // Configure the AWS Provider
 provider "aws" {
-  access_key = "${var.access_key}"
-  secret_key = "${var.secret_key}"
-  region     = "${var.region}"
+  access_key = var.access_key
+  secret_key = var.secret_key
+  region     = var.region
 }
 variable "region" {
   type    = string
@@ -30,7 +30,7 @@ variable "public_key_path" {
 }
 resource "aws_key_pair" "keypair" {
   key_name   = "${random_string.random_name_post.result}-${var.key_name}"
-  public_key = "${file(var.public_key_path)}"
+  public_key = file(var.public_key_path)
 }
 variable "az_default" {
   type    = string
@@ -96,35 +96,35 @@ resource "aws_vpc" "main_vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
     Name    = "${var.cluster_name}-VPC-Main-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
 
 //Create a Subnet
 resource "aws_subnet" "main" {
-  vpc_id            = "${aws_vpc.main_vpc.id}"
-  availability_zone = "${var.az_default}"
+  vpc_id            = aws_vpc.main_vpc.id
+  availability_zone = var.az_default
   cidr_block        = "10.0.1.0/24"
 
   tags = {
     Name    = "${var.cluster_name}-Subnet-Main-${random_string.random_name_post.result}"
     Type    = "FortiDemo-Terraform"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
 
   }
 }
 
 //Second Subnet for the client
 resource "aws_subnet" "secondary" {
-  vpc_id            = "${aws_vpc.main_vpc.id}"
-  availability_zone = "${var.az_default}"
+  vpc_id            = aws_vpc.main_vpc.id
+  availability_zone = var.az_default
   cidr_block        = "10.0.2.0/24"
 
   tags = {
     Name    = "${var.cluster_name}-Subnet-Secondary-${random_string.random_name_post.result}"
     Type    = "FortiDemo-Terraform"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
   }
 }
 
@@ -132,7 +132,7 @@ resource "aws_subnet" "secondary" {
 resource "aws_security_group" "allow_all" {
   name        = "allow_all"
   description = "Allow all inbound traffic"
-  vpc_id      = "${aws_vpc.main_vpc.id}" //Attach to the VPC
+  vpc_id      = aws_vpc.main_vpc.id //Attach to the VPC
 
   ingress {
     from_port = 0
@@ -150,7 +150,7 @@ resource "aws_security_group" "allow_all" {
   }
   tags = {
     Name    = "${var.cluster_name}-Sec-Group-Allow-Ingress-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
@@ -179,9 +179,9 @@ EOF
 //Inspector Policy, additional permissions added
 //so that SDN connector can get proper values
 resource "aws_iam_policy" "fortidemo_policy" {
-  name = "${var.cluster_name}-policy-${random_string.random_name_post.result}"
+  name        = "${var.cluster_name}-policy-${random_string.random_name_post.result}"
   description = "FortiDemo Inspector Policy"
-  policy = <<EOF
+  policy      = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -239,9 +239,9 @@ resource "aws_iam_policy" "fortidemo_s3_policy" {
 EOF
 }
 resource "aws_iam_policy" "fortidemo_ec2_policy" {
-  name = "${var.cluster_name}-ec2-policy-${random_string.random_name_post.result}"
+  name        = "${var.cluster_name}-ec2-policy-${random_string.random_name_post.result}"
   description = "Ec2 SDN Policy"
-  policy = <<EOF
+  policy      = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -274,31 +274,31 @@ resource "aws_iam_policy" "fortidemo_ec2_policy" {
 EOF
 }
 resource "aws_iam_role_policy_attachment" "policy_attach_ec2" {
-  role       = "${aws_iam_role.fortidemo_iam_role.name}"
-  policy_arn = "${aws_iam_policy.fortidemo_ec2_policy.arn}"
+  role       = aws_iam_role.fortidemo_iam_role.name
+  policy_arn = aws_iam_policy.fortidemo_ec2_policy.arn
 }
 //Role attachment
 resource "aws_iam_role_policy_attachment" "policy_attach" {
-  role       = "${aws_iam_role.fortidemo_iam_role.name}"
-  policy_arn = "${aws_iam_policy.fortidemo_policy.arn}"
+  role       = aws_iam_role.fortidemo_iam_role.name
+  policy_arn = aws_iam_policy.fortidemo_policy.arn
 }
 resource "aws_iam_role_policy_attachment" "policy_attach_s3" {
-  role       = "${aws_iam_role.fortidemo_iam_role.name}"
-  policy_arn = "${aws_iam_policy.fortidemo_s3_policy.arn}"
+  role       = aws_iam_role.fortidemo_iam_role.name
+  policy_arn = aws_iam_policy.fortidemo_s3_policy.arn
 }
 resource "aws_iam_instance_profile" "fortidemo" {
   name = "${var.cluster_name}-instance_profile-${random_string.random_name_post.result}"
-  role = "${aws_iam_role.fortidemo_iam_role.name}"
+  role = aws_iam_role.fortidemo_iam_role.name
 }
 
 //Specify aws_nat_gateway
 resource "aws_nat_gateway" "gw" {
-  allocation_id = "${aws_eip.fortigate_eip_nat_gateway.id}"
-  subnet_id     = "${aws_subnet.main.id}"
+  allocation_id = aws_eip.fortigate_eip_nat_gateway.id
+  subnet_id     = aws_subnet.main.id
 
   tags = {
     Name    = "${var.cluster_name}-NatGateway-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
@@ -306,17 +306,17 @@ resource "aws_eip" "fortigate_eip_nat_gateway" {
   vpc = true
   tags = {
     Name    = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.main_vpc.id}"
+  vpc_id = aws_vpc.main_vpc.id
 
   tags = {
     Name    = "${var.cluster_name}-IGW-Main-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
@@ -324,17 +324,17 @@ resource "aws_internet_gateway" "gw" {
 
 //  Create a route table allowing all addresses to access the Gateway
 resource "aws_route_table" "public_gateway_route" {
-  vpc_id = "${aws_vpc.main_vpc.id}"
+  vpc_id = aws_vpc.main_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.gw.id}"
+    gateway_id = aws_internet_gateway.gw.id
   }
 
   //  Use our common tags and add a specific name.
   tags = {
     Name    = "${var.cluster_name}-Public-Route-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
 
   }
@@ -342,17 +342,17 @@ resource "aws_route_table" "public_gateway_route" {
 }
 //Nat Gateway route table
 resource "aws_route_table" "nat_gateway_route" {
-  vpc_id     = "${aws_vpc.main_vpc.id}"
-  depends_on = ["aws_network_interface.fgt_second_nic"]
+  vpc_id     = aws_vpc.main_vpc.id
+  depends_on = [aws_network_interface.fgt_second_nic]
   route {
     cidr_block           = "0.0.0.0/0"
-    network_interface_id = "${aws_network_interface.fgt_second_nic.id}"
+    network_interface_id = aws_network_interface.fgt_second_nic.id
   }
 
   //  Use our common tags and add a specific name.
   tags = {
     Name    = "${var.cluster_name}-NatGateway-Route-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
 
   }
@@ -360,13 +360,13 @@ resource "aws_route_table" "nat_gateway_route" {
 }
 //Associate the Route with the main Subnet
 resource "aws_route_table_association" "public-subnet" {
-  subnet_id      = "${aws_subnet.main.id}"
-  route_table_id = "${aws_route_table.public_gateway_route.id}"
+  subnet_id      = aws_subnet.main.id
+  route_table_id = aws_route_table.public_gateway_route.id
 }
 resource "aws_route_table_association" "public-subnet-secondary" {
-  subnet_id      = "${aws_subnet.secondary.id}"
-  route_table_id = "${aws_route_table.nat_gateway_route.id}"
-  depends_on     = ["aws_route_table.nat_gateway_route", "aws_nat_gateway.gw"]
+  subnet_id      = aws_subnet.secondary.id
+  route_table_id = aws_route_table.nat_gateway_route.id
+  depends_on     = [aws_route_table.nat_gateway_route, aws_nat_gateway.gw]
 }
 
 resource "aws_s3_bucket" "s3_bucket" {
@@ -374,13 +374,13 @@ resource "aws_s3_bucket" "s3_bucket" {
   acl    = "public-read"
   tags = {
     Name    = "${var.cluster_name}-s3-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
 
 resource "aws_s3_bucket_object" "config_script" {
-  bucket = "${aws_s3_bucket.s3_bucket.id}"
+  bucket = aws_s3_bucket.s3_bucket.id
   key    = "runInspector.py"
   source = "${path.module}/runInspector.py.rendered"
   acl    = "aws-exec-read"
@@ -395,65 +395,65 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "ubuntu_instance" {
-  ami                    = "${data.aws_ami.ubuntu.id}"
+  ami                    = data.aws_ami.ubuntu.id
   private_ip             = "10.0.2.100" //set to avoid cyclical condition with GW
-  iam_instance_profile   = "${aws_iam_instance_profile.fortidemo.name}"
-  availability_zone      = "${var.az_default}"
-  key_name               = "${aws_key_pair.keypair.key_name}"
+  iam_instance_profile   = aws_iam_instance_profile.fortidemo.name
+  availability_zone      = var.az_default
+  key_name               = aws_key_pair.keypair.key_name
   instance_type          = "t2.micro"
-  subnet_id              = "${aws_subnet.secondary.id}"
-  vpc_security_group_ids = ["${aws_security_group.allow_all.id}"]
+  subnet_id              = aws_subnet.secondary.id
+  vpc_security_group_ids = [aws_security_group.allow_all.id]
   tags = {
     Name      = "${var.cluster_name}-Ubuntu-Instance-${random_string.random_name_post.result}"
     env       = "Inspector-${random_string.random_name_post.result}"
     ManagedBy = "Terraform"
-    Account   = "${data.aws_caller_identity.current.arn}"
+    Account   = data.aws_caller_identity.current.arn
     Type      = "FortiDemo-Terraform"
-    Account   = "${data.aws_caller_identity.current.arn}"
+    Account   = data.aws_caller_identity.current.arn
 
 
   } //Calling as a file makes syntax easier.
-  user_data  = "${data.template_file.cloud-init.rendered}"
-  depends_on = ["aws_iam_role.fortidemo_iam_role"]
+  user_data  = data.template_file.cloud-init.rendered
+  depends_on = [aws_iam_role.fortidemo_iam_role]
 }
 
 //Additional Nic for Fortigate
 resource "aws_network_interface" "fgt_primary_nic" {
-  subnet_id = "${aws_subnet.main.id}"
+  subnet_id = aws_subnet.main.id
   tags = {
     Name    = "primary_network_interface"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
 //Secondary nic
 resource "aws_network_interface" "fgt_second_nic" {
-  subnet_id       = "${aws_subnet.secondary.id}"
-  security_groups = ["${aws_security_group.allow_all.id}"]
+  subnet_id       = aws_subnet.secondary.id
+  security_groups = [aws_security_group.allow_all.id]
   //Source_dest_check must be turned off in order for egress traffic to work
   source_dest_check = false
   tags = {
     Name    = "secondary_network_interface"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
   attachment {
-    instance     = "${aws_instance.fortigate.id}"
+    instance     = aws_instance.fortigate.id
     device_index = 1
   }
-  depends_on = ["aws_instance.fortigate"]
+  depends_on = [aws_instance.fortigate]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-07baf8576c28ee599"                      //6.4 us-west-1
-  iam_instance_profile   = "${aws_iam_instance_profile.fortidemo.name}" //IAM permissions for SDN connector
-  availability_zone      = "${var.az_default}"
+  ami                    = "ami-00b5736be5f8e72c0"                      //6.4 us-west-1
+  iam_instance_profile   = aws_iam_instance_profile.fortidemo.name //IAM permissions for SDN connector
+  availability_zone      = var.az_default
   instance_type          = "c4.large"
-  subnet_id              = "${aws_subnet.main.id}"
-  vpc_security_group_ids = ["${aws_security_group.allow_all.id}"]
-  user_data              = "${data.template_file.setup-nat-eip.rendered}"
+  subnet_id              = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.allow_all.id]
+  user_data              = data.template_file.setup-nat-eip.rendered
   tags = {
     Name    = "${var.cluster_name}-FortiGate-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
@@ -462,13 +462,13 @@ resource "aws_eip" "fortigate_eip" {
   vpc = true
   tags = {
     Name    = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
-    Account = "${data.aws_caller_identity.current.arn}"
+    Account = data.aws_caller_identity.current.arn
     Type    = "FortiDemo-Terraform"
   }
 }
 resource "aws_eip_association" "eip_association" {
-  instance_id   = "${aws_instance.fortigate.id}"
-  allocation_id = "${aws_eip.fortigate_eip.id}"
+  instance_id   = aws_instance.fortigate.id
+  allocation_id = aws_eip.fortigate_eip.id
 
 }
 
@@ -484,12 +484,12 @@ resource "aws_inspector_resource_group" "inspector_resource_group" {
 
 resource "aws_inspector_assessment_target" "inspector_assesment" {
   name               = "${var.cluster_name}-Inspector-Instance-${random_string.random_name_post.result}"
-  resource_group_arn = "${aws_inspector_resource_group.inspector_resource_group.arn}"
+  resource_group_arn = aws_inspector_resource_group.inspector_resource_group.arn
 }
 
 resource "aws_inspector_assessment_template" "inspector_template" {
   name       = "Inspector-${random_string.random_name_post.result}"
-  target_arn = "${aws_inspector_assessment_target.inspector_assesment.arn}"
+  target_arn = aws_inspector_assessment_target.inspector_assesment.arn
   duration   = 300
 
   rules_package_arns = ["arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TKgzoVOa"]
@@ -497,14 +497,14 @@ resource "aws_inspector_assessment_template" "inspector_template" {
 
 
 output "InstanceID" {
-  value = "${aws_instance.fortigate.id}"
+  value = aws_instance.fortigate.id
 }
 output "FortiGate_Public_IP" {
-  value = "${aws_eip.fortigate_eip.public_ip}"
+  value = aws_eip.fortigate_eip.public_ip
 }
 output "InstanceName" {
-  value = "${aws_instance.fortigate.tags.Name}"
+  value = aws_instance.fortigate.tags.Name
 }
 output "PrivateIP" {
-  value = "${aws_network_interface.fgt_second_nic.private_ip}"
+  value = aws_network_interface.fgt_second_nic.private_ip
 }
