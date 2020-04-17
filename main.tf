@@ -5,27 +5,27 @@ provider "aws" {
   region     = "${var.region}"
 }
 variable "region" {
-  type    = "string"
+  type    = string
   default = "us-west-1" //Default Region
 
 }
 data "aws_caller_identity" "current" {}
 
 variable "access_key" {
-  type    = "string"
+  type    = string
   default = ""
 }
 variable "secret_key" {
-  type    = "string"
+  type    = string
   default = ""
 }
 
 variable "key_name" {
-  type    = "string"
+  type    = string
   default = "id_rsa.pub"
 }
 variable "public_key_path" {
-  type    = "string"
+  type    = string
   default = "~/.ssh/id_rsa.pub"
 }
 resource "aws_key_pair" "keypair" {
@@ -33,47 +33,51 @@ resource "aws_key_pair" "keypair" {
   public_key = "${file(var.public_key_path)}"
 }
 variable "az_default" {
-  type    = "string"
+  type    = string
   default = "us-west-1c"
 }
 variable "fortidemo_ip" {
-  type    = "string"
+  type    = string
   default = ""
 }
 variable "admin_pass" {
-  type    = "string"
+  type    = string
   default = "SecurityFabric"
+}
+variable "cluster_name" {
+  type    = string
+  default = "fortidemo" //Must be lowercase for s3
 }
 
 //Find aws_eip and replace in config file:
 data "template_file" "setup-nat-eip" {
   template = "${file("${path.module}/config_script")}"
   vars = {
-    aws_eip            = "${aws_eip.fortigate_eip.public_ip}",
-    forti_demo_ip      = "${var.fortidemo_ip}",
+    aws_eip            = aws_eip.fortigate_eip.public_ip,
+    forti_demo_ip      = var.fortidemo_ip,
     ubuntu_instance_ip = "10.0.2.100",
-    admin_pass         = "${var.admin_pass}"
+    admin_pass         = var.admin_pass
   }
 }
 
 data "template_file" "setup-inspector-run" {
   template = "${file("./runInspector.py")}"
   vars = {
-    template_name = "${aws_inspector_assessment_template.inspector_template.name}",
-    template_arn  = "${aws_inspector_assessment_template.inspector_template.arn}"
-    region        = "${var.region}"
+    template_name = aws_inspector_assessment_template.inspector_template.name,
+    template_arn  = aws_inspector_assessment_template.inspector_template.arn,
+    region        = var.region
   }
 }
 data "template_file" "cloud-init" {
   template = "${file("./cloud-init.sh")}"
   vars = {
     s3_url     = "s3://${aws_s3_bucket.s3_bucket.id}/${aws_s3_bucket_object.config_script.id}"
-    region     = "${var.region}"
-    private_ip = "${aws_network_interface.fgt_second_nic.private_ip}" //secondary nic IP
+    region     = var.region
+    private_ip = aws_network_interface.fgt_second_nic.private_ip //secondary nic IP
   }
 }
 resource "local_file" "runInspector_render" {
-  content  = "${data.template_file.setup-inspector-run.rendered}"
+  content  = data.template_file.setup-inspector-run.rendered
   filename = "${path.module}/runInspector.py.rendered"
 }
 //Create a random 3 char suffix to avoid collisions
@@ -82,10 +86,6 @@ resource "random_string" "random_name_post" {
   special          = true
   override_special = ""
   min_lower        = 5
-}
-variable "cluster_name" {
-  type    = "string"
-  default = "fortidemo" //Must be lowercase for s3
 }
 
 //Rule Data for AWS inspector - Returns all rules for that region
@@ -444,7 +444,7 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = ["aws_instance.fortigate"]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-059bf3b352703af0b"                      //6.2.3 us-west-1
+  ami                    = "ami-07baf8576c28ee599"                      //6.4 us-west-1
   iam_instance_profile   = "${aws_iam_instance_profile.fortidemo.name}" //IAM permissions for SDN connector
   availability_zone      = "${var.az_default}"
   instance_type          = "c4.large"
