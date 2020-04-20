@@ -444,7 +444,7 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = [aws_instance.fortigate]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-00b5736be5f8e72c0"                      //6.4 us-west-1
+  ami                    = "ami-0f54d37e47fa994a0"                      //6.2.3 us-west-1
   iam_instance_profile   = aws_iam_instance_profile.fortidemo.name //IAM permissions for SDN connector
   availability_zone      = var.az_default
   instance_type          = "c4.large"
