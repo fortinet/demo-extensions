@@ -528,7 +528,6 @@ resource "aws_eip_association" "eip_association" {
 
 }
 
-
 //Setup the Inspector
 //specify the tags to look at
 //Do not call env from instance to avoid cyclical condition
