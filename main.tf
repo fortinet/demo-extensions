@@ -3,7 +3,45 @@ provider "aws" {
   access_key = var.access_key
   secret_key = var.secret_key
   region     = var.region
+
 }
+terraform {
+  required_providers {
+    fortios = {
+      source = "fortinetdev/fortios"
+      version = "1.6.16"
+    }
+  }
+}
+
+
+data "external" "external_ip" {
+  program = ["bash"  , "get-external-ip.sh"]
+}
+data "external" "setup_api_key" {
+  depends_on =[local_file.setup_token]
+  program = ["bash"  , "./run-set-api-key.sh"]
+}
+
+
+data "template_file" "setup_token" {
+
+  template = "${file("./set-api-key.sh")}"
+  vars = {
+    fortigate_Ip       = aws_eip.fortigate_eip.public_ip,
+  }
+}
+resource "local_file" "setup_token" {
+  content  = data.template_file.setup_token.rendered
+  filename = "${path.module}/set-api-key.sh.rendered"
+}
+
+provider "fortios" {
+  hostname = aws_eip.fortigate_eip.public_ip
+  token    = data.external.setup_api_key.result
+  insecure = "true"
+}
+
 variable "region" {
   type    = string
   default = "us-west-1" //Default Region
@@ -59,6 +97,23 @@ data "template_file" "setup-nat-eip" {
     admin_pass         = var.admin_pass
   }
 }
+
+resource "null_resource" "test_instance_is_up" {
+  provisioner "remote-exec" {
+    connection {
+      host = aws_eip.fortigate_eip.public_ip
+      user = "admin"
+
+    }
+
+
+  }
+
+
+
+}
+
+
 
 data "template_file" "setup-inspector-run" {
   template = "${file("./runInspector.py")}"
@@ -449,6 +504,7 @@ resource "aws_instance" "fortigate" {
   availability_zone      = var.az_default
   instance_type          = "c4.large"
   subnet_id              = aws_subnet.main.id
+  key_name               = aws_key_pair.keypair.key_name
   vpc_security_group_ids = [aws_security_group.allow_all.id]
   user_data              = data.template_file.setup-nat-eip.rendered
   tags = {
@@ -507,4 +563,10 @@ output "InstanceName" {
 }
 output "PrivateIP" {
   value = aws_network_interface.fgt_second_nic.private_ip
+}
+output "data"{
+  value = data.external.external_ip.result
+}
+output "token"{
+  value = data.external.setup_api_key.result
 }
