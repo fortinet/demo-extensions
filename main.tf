@@ -9,7 +9,7 @@ terraform {
   required_providers {
     fortios = {
       source = "fortinetdev/fortios"
-      version = "1.6.16"
+      version = "1.7.0"
     }
   }
 }
@@ -22,7 +22,6 @@ data "external" "setup_api_key" {
   depends_on =[local_file.setup_token]
   program = ["bash"  , "./run-set-api-key.sh"]
 }
-
 
 data "template_file" "setup_token" {
 
@@ -38,25 +37,11 @@ resource "local_file" "setup_token" {
 
 provider "fortios" {
   hostname = aws_eip.fortigate_eip.public_ip
-  token    = data.external.setup_api_key.result
+  token    = "${data.external.setup_api_key.result}"
   insecure = "true"
 }
 
-variable "region" {
-  type    = string
-  default = "us-west-1" //Default Region
-
-}
 data "aws_caller_identity" "current" {}
-
-variable "access_key" {
-  type    = string
-  default = ""
-}
-variable "secret_key" {
-  type    = string
-  default = ""
-}
 
 variable "key_name" {
   type    = string
@@ -77,10 +62,6 @@ variable "az_default" {
 variable "fortidemo_ip" {
   type    = string
   default = ""
-}
-variable "admin_pass" {
-  type    = string
-  default = "SecurityFabric"
 }
 variable "cluster_name" {
   type    = string
@@ -105,12 +86,7 @@ resource "null_resource" "test_instance_is_up" {
       user = "admin"
 
     }
-
-
   }
-
-
-
 }
 
 
