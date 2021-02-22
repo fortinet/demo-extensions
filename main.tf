@@ -25,7 +25,7 @@ data "external" "setup_api_key" {
 
 
 data "template_file" "setup_token" {
-
+  depends_on = [null_resource.test_instance_is_up]
   template = "${file("./set-api-key.sh")}"
   vars = {
     fortigate_Ip       = aws_eip.fortigate_eip.public_ip,
@@ -103,17 +103,11 @@ resource "null_resource" "test_instance_is_up" {
     connection {
       host = aws_eip.fortigate_eip.public_ip
       user = "admin"
-
     }
-
-
   }
 
 
-
 }
-
-
 
 data "template_file" "setup-inspector-run" {
   template = "${file("./runInspector.py")}"
