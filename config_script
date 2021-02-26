@@ -19,7 +19,7 @@ config system api-user
         set vdom "root"
         config trusthost
             edit 1
-                set ipv4-trusthost "${ubuntu_instance_ip}" 255.255.255.0
+                set ipv4-trusthost "${trusted_host}" 255.255.255.0
             next
         end
     next

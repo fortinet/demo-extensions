@@ -5,6 +5,7 @@ terraform.tfvars
 terraform.tfstate
 terraform.tfstate.backup
 runInspector.py.rendered
+provider.tf
 *.rendered
 *.bak
 # project-specific
