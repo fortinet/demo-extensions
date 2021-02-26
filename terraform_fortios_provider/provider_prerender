@@ -1,0 +1,44 @@
+terraform {
+  required_providers {
+    fortios = {
+      source = "fortinetdev/fortios"
+      version = "1.6.16"
+    }
+  }
+}
+provider "fortios" {
+  hostname = "${aws_eip}"
+  token    = "${token}"
+  insecure = "true"
+}
+
+resource "fortios_firewall_vip" "toUbunutuVIP" {
+  name = "toUbunutuVIP"
+  comment = "VIP to Ubuntu"
+  extintf = "port1"
+  portforward = "enable"
+  extport = "22"
+  mappedport = "22"
+
+  mappedip {
+    range = "${aws_eip}"
+  }
+}
+#Administrator
+resource "fortios_system_admin" "administrator" {
+  name = "cloudadmin"
+  password = "${admin_pass}"
+}
+
+
+#VPN IPsec phase1-interface
+resource "fortios_vpnipsec_phase1interface" "FortiDEMOphase1" {
+  name = "FortiDEMOphase1"
+  interface = "port1"
+  peertype = "any"
+  net_device = "enable"
+  proposal = "aes128-sha256 aes256-sha256 aes128-sha1 aes256-sha1"
+  wizard_type = "static-fortigate"
+  remote_gw = "${forti_demo_ip}"
+  psksecret = "fortidemo"
+}
