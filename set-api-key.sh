@@ -1,3 +1,4 @@
+#!/usr/bin/expect -f
 spawn ssh admin@${fortigate_Ip}
 expect "? "
 send "yes\r"

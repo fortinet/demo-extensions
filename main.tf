@@ -8,26 +8,48 @@ provider "aws" {
 terraform {
   required_providers {
     fortios = {
-      source = "fortinetdev/fortios"
-      version = "1.7.0"
+      source  = "fortinetdev/fortios"
+      version = "1.10.4"
     }
   }
 }
+// Create a Template file with the proper TOKEN and Hostname attributes
+// This allows us to execute the FortiOS provider after the aws_eip and token are generated
+// See the following for more information:
+// https://github.com/hashicorp/terraform/issues/2976
+// https://github.com/hashicorp/terraform/issues/2430
+//
 
+data "template_file" "setup_fortios_provider" {
+  depends_on = [null_resource.test_instance_is_up]
+  template   = "${file("./terraform_fortios_provider/provider_prerender")}"
+  vars = {
+    aws_eip       = aws_eip.fortigate_eip.public_ip,
+    token         = data.external.setup_api_key.result.token
+    forti_demo_ip = var.fortidemo_ip,
+    admin_pass    = var.admin_pass
+  }
+}
+// Create the provider TF file.With the template values.
+resource "local_file" "create_fortios_provider_tf_file" {
+  content  = data.template_file.setup_fortios_provider.rendered
+  filename = "${path.module}/terraform_fortios_provider/provider.tf"
+}
 
 data "external" "external_ip" {
-  program = ["bash"  , "get-external-ip.sh"]
+  program = ["bash", "get-external-ip.sh"]
 }
 data "external" "setup_api_key" {
-  depends_on =[local_file.setup_token]
-  program = ["bash"  , "./run-set-api-key.sh"]
+  depends_on = [local_file.setup_token]
+  program    = ["bash", "./run-set-api-key.sh"]
 }
+
 
 data "template_file" "setup_token" {
   depends_on = [null_resource.test_instance_is_up]
-  template = "${file("./set-api-key.sh")}"
+  template   = "${file("./set-api-key.sh")}"
   vars = {
-    fortigate_Ip       = aws_eip.fortigate_eip.public_ip,
+    fortigate_Ip = aws_eip.fortigate_eip.public_ip,
   }
 }
 resource "local_file" "setup_token" {
@@ -35,13 +57,21 @@ resource "local_file" "setup_token" {
   filename = "${path.module}/set-api-key.sh.rendered"
 }
 
-provider "fortios" {
-  hostname = aws_eip.fortigate_eip.public_ip
-  token    = "${data.external.setup_api_key.result}"
-  insecure = "true"
-}
+variable "region" {
+  type    = string
+  default = "us-west-1" //Default Region
 
+}
 data "aws_caller_identity" "current" {}
+
+variable "access_key" {
+  type    = string
+  default = ""
+}
+variable "secret_key" {
+  type    = string
+  default = ""
+}
 
 variable "key_name" {
   type    = string
@@ -63,19 +93,25 @@ variable "fortidemo_ip" {
   type    = string
   default = ""
 }
+variable "admin_pass" {
+  type    = string
+  default = "SecurityFabric"
+}
 variable "cluster_name" {
   type    = string
   default = "fortidemo" //Must be lowercase for s3
 }
 
 //Find aws_eip and replace in config file:
+
+//TODO:clean up unsused vars.
 data "template_file" "setup-nat-eip" {
   template = "${file("${path.module}/config_script")}"
   vars = {
-    aws_eip            = aws_eip.fortigate_eip.public_ip,
-    forti_demo_ip      = var.fortidemo_ip,
-    ubuntu_instance_ip = "10.0.2.100",
-    admin_pass         = var.admin_pass
+    aws_eip       = aws_eip.fortigate_eip.public_ip,
+    forti_demo_ip = var.fortidemo_ip,
+    trusted_host  = data.external.external_ip.result.ipAddress,
+    admin_pass    = var.admin_pass
   }
 }
 
@@ -85,6 +121,24 @@ resource "null_resource" "test_instance_is_up" {
       host = aws_eip.fortigate_eip.public_ip
       user = "admin"
     }
+  }
+}
+resource "null_resource" "init_fortios_provider" {
+  depends_on = [local_file.create_fortios_provider_tf_file]
+
+
+  provisioner "local-exec" {
+    working_dir = "./terraform_fortios_provider/"
+    command     = "terraform init"
+  }
+}
+resource "null_resource" "execute_fortios_provider" {
+  depends_on = [null_resource.init_fortios_provider]
+
+
+  provisioner "local-exec" {
+    working_dir = "./terraform_fortios_provider/"
+    command     = "terraform apply -auto-approve"
   }
 }
 
@@ -332,6 +386,7 @@ resource "aws_nat_gateway" "gw" {
 }
 resource "aws_eip" "fortigate_eip_nat_gateway" {
   vpc = true
+  public_ipv4_pool = "amazon"
   tags = {
     Name    = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
     Account = data.aws_caller_identity.current.arn
@@ -472,10 +527,10 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = [aws_instance.fortigate]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-0f54d37e47fa994a0"                      //6.2.3 us-west-1
+  ami                    = "ami-08f558c88d066cd22"                 //6.4.4 GA B1803  us-west-1
   iam_instance_profile   = aws_iam_instance_profile.fortidemo.name //IAM permissions for SDN connector
   availability_zone      = var.az_default
-  instance_type          = "c4.large"
+  instance_type          = "c5.large"
   subnet_id              = aws_subnet.main.id
   key_name               = aws_key_pair.keypair.key_name
   vpc_security_group_ids = [aws_security_group.allow_all.id]
@@ -536,9 +591,9 @@ output "InstanceName" {
 output "PrivateIP" {
   value = aws_network_interface.fgt_second_nic.private_ip
 }
-output "data"{
+output "data" {
   value = data.external.external_ip.result
 }
-output "token"{
-  value = data.external.setup_api_key.result
+output "token" {
+  value = data.external.setup_api_key.result.token
 }

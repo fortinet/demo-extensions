@@ -21,6 +21,8 @@ Terraform deploys the following components:
 
 ## Deployment
 > **Note:** By default the script expects an ssh key at ~/.ssh/id_rsa.pub
+
+> **Note:IPV6** The FortiGate cloud-init data expects an ipv4 address to be added to the trusthost. If you are using ipv6 you will need to adjust the trusthost under config_script set ipv4-trusthost to set ipv6-trusthost
 To deploy the FortiDemo Inspector:
 
   1. Clone the repository.
