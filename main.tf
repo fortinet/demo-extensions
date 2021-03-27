@@ -6,6 +6,7 @@ provider "aws" {
 
 }
 terraform {
+  required_version = "> 0.14.0"
   required_providers {
     fortios = {
       source  = "fortinetdev/fortios"
@@ -103,8 +104,6 @@ variable "cluster_name" {
 }
 
 //Find aws_eip and replace in config file:
-
-//TODO:clean up unsused vars.
 data "template_file" "setup-nat-eip" {
   template = file("${path.module}/config_script")
   vars = {
