@@ -22,7 +22,7 @@ terraform {
 
 data "template_file" "setup_fortios_provider" {
   depends_on = [null_resource.test_instance_is_up]
-  template   = "${file("./terraform_fortios_provider/provider_prerender")}"
+  template   = file("./terraform_fortios_provider/provider_prerender")
   vars = {
     aws_eip       = aws_eip.fortigate_eip.public_ip,
     token         = data.external.setup_api_key.result.token
@@ -47,7 +47,7 @@ data "external" "setup_api_key" {
 
 data "template_file" "setup_token" {
   depends_on = [null_resource.test_instance_is_up]
-  template   = "${file("./set-api-key.sh")}"
+  template   = file("./set-api-key.sh")
   vars = {
     fortigate_Ip = aws_eip.fortigate_eip.public_ip,
   }
@@ -106,7 +106,7 @@ variable "cluster_name" {
 
 //TODO:clean up unsused vars.
 data "template_file" "setup-nat-eip" {
-  template = "${file("${path.module}/config_script")}"
+  template = file("${path.module}/config_script")
   vars = {
     aws_eip       = aws_eip.fortigate_eip.public_ip,
     forti_demo_ip = var.fortidemo_ip,
@@ -143,7 +143,7 @@ resource "null_resource" "execute_fortios_provider" {
 }
 
 data "template_file" "setup-inspector-run" {
-  template = "${file("./runInspector.py")}"
+  template = file("./runInspector.py")
   vars = {
     template_name = aws_inspector_assessment_template.inspector_template.name,
     template_arn  = aws_inspector_assessment_template.inspector_template.arn,
@@ -151,7 +151,7 @@ data "template_file" "setup-inspector-run" {
   }
 }
 data "template_file" "cloud-init" {
-  template = "${file("./cloud-init.sh")}"
+  template = file("./cloud-init.sh")
   vars = {
     s3_url     = "s3://${aws_s3_bucket.s3_bucket.id}/${aws_s3_bucket_object.config_script.id}"
     region     = var.region
@@ -385,7 +385,7 @@ resource "aws_nat_gateway" "gw" {
   }
 }
 resource "aws_eip" "fortigate_eip_nat_gateway" {
-  vpc = true
+  vpc              = true
   public_ipv4_pool = "amazon"
   tags = {
     Name    = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"

@@ -19,6 +19,7 @@ resource "fortios_system_csf" "csfSettings" {
   upstream_ip = "10.100.88.1"
   management_ip = "${aws_eip}"
   management_port = 443
+  saml_configuration_sync = "default"
 }
 
 resource "fortios_firewall_vip" "ubuntuVIP" {
@@ -30,7 +31,7 @@ resource "fortios_firewall_vip" "ubuntuVIP" {
   mappedport = "22"
 
   mappedip {
-    range = "${aws_eip}"
+    range = "10.0.2.100"
   }
 }
 
@@ -286,16 +287,3 @@ resource "fortios_router_static" "blackhole" {
     fortios_system_interface.FortiDEMOinterface
     ]
 }
-
-#SAML Settings (need)
-#resource "fortios_system_saml" "SAML" {
-#  status = "enable"
-#  role = "service-provider"
-#  idp_entity_id = "http://{forti_demo_ip}:10403/saml-idp/csf_s3n6f2jbdvf2mecjd0qtau9qdrlg02x/metadata/"
-#  idp_single_sign_on_url = "https://{forti_demo_ip}:10403/saml-idp/csf_s3n6f2jbdvf2mecjd0qtau9qdrlg02x/login/"
-#  idp_single_logout_url = "https://{forti_demo_ip}:10403/saml-idp/csf_s3n6f2jbdvf2mecjd0qtau9qdrlg02x/logout/"
-#  default_login_page = "normal"
-#  default_profile = "super_admin"
-#  idp_cert = "TEMP_Cert_1"
-#  server_address = "${aws_eip}:443"
-#}

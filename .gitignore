@@ -8,12 +8,12 @@ runInspector.py.rendered
 provider.tf
 *.rendered
 *.bak
+
 # project-specific
 **/dist
 **/local
 **/local*
 scripts/clean-code.js
-
 # npm
 **/node_modules
 **/npm-debug.log
