@@ -9,6 +9,7 @@ runInspector.py.rendered
 provider.tf
 *.rendered
 *.bak
+terraform_fortios_provider/.terraform.lock.hcl
 
 # project-specific
 **/dist

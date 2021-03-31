@@ -5,7 +5,8 @@
 ## Requirements
 * [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.12
 * An [AWS access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)
-* FortiOS 6.2.3
+* FortiOS 6.4.4
+* Environment with **expect** tool support https://core.tcl-lang.org/expect/index
 
 
 ## Deployment overview
