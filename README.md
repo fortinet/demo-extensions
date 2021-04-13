@@ -3,7 +3,7 @@
   A Terraform script to demonstrate AWS Inspector with FortiGate.
 
 ## Requirements
-* [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.12
+* [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.14
 * An [AWS access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)
 * FortiOS 6.4.4
 * Environment with **expect** tool support https://core.tcl-lang.org/expect/index
