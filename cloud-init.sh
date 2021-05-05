@@ -13,15 +13,29 @@ while true
                 break
         fi
 done
-sudo apt-get install boto --yes --force-yes
+echo ==========================================================
+echo sudo apt-get install python3-pip --yes
+sudo apt-get install python3-pip --yes
+echo pip3 install boto3
+pip3 install boto3
+echo wget 'https://inspector-agent.amazonaws.com/linux/latest/install' -P /tmp/  --tries=20
 wget 'https://inspector-agent.amazonaws.com/linux/latest/install' -P /tmp/  --tries=20
+echo sudo bash /tmp/install
 sudo bash /tmp/install
-sudo apt-get install python-pip --yes --force-yes
-sudo pip install boto3
-sudo pip install awscli
-wget `aws --region "${region}" s3  presign "${s3_url}"` -O /tmp/runInspector.py
-sudo python /tmp/runInspector.py
+echo sudo apt-get install python3-pip --yes
+sudo apt-get install python3-pip --yes
+echo pip3 install boto3
+pip3 install boto3
+echo sudo apt-get install awscli --yes
+sudo apt-get install awscli --yes
+echo pip3 install --upgrade awscli
+pip3 install --upgrade awscli
+echo aws s3 --region "${region}" cp "${s3_url}" /tmp/
+aws s3 --region "${region}" cp "${s3_url}" /tmp/
+echo sudo python3 /tmp/runInspectsor.py
+sudo python3 /tmp/runInspectsor.py
 #Add the FortiGate as a route to show inspector CVE data in topology.
+echo sudo route add default gw "${private_ip}" eth0
 sudo route add default gw "${private_ip}" eth0
 ping 8.8.8.8
 EOF
