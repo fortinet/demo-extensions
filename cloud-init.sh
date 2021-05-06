@@ -32,8 +32,8 @@ echo pip3 install --upgrade awscli
 pip3 install --upgrade awscli
 echo aws s3 --region "${region}" cp "${s3_url}" /tmp/
 aws s3 --region "${region}" cp "${s3_url}" /tmp/
-echo sudo python3 /tmp/runInspectsor.py
-sudo python3 /tmp/runInspectsor.py
+echo sudo python3 /tmp/runInspector.py
+sudo python3 /tmp/runInspector.py
 #Add the FortiGate as a route to show inspector CVE data in topology.
 echo sudo route add default gw "${private_ip}" eth0
 sudo route add default gw "${private_ip}" eth0

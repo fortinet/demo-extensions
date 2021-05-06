@@ -572,7 +572,7 @@ resource "aws_inspector_assessment_target" "inspector_assesment" {
 resource "aws_inspector_assessment_template" "inspector_template" {
   name       = "Inspector-${random_string.random_name_post.result}"
   target_arn = aws_inspector_assessment_target.inspector_assesment.arn
-  duration   = 300
+  duration   = 900
 
   rules_package_arns = ["arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TKgzoVOa"]
 }
