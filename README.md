@@ -1,6 +1,10 @@
-# FortiDemo Inspector
+# FortiOS Provider Integration with Terraform
 ## Description
-  A Terraform script to demonstrate AWS Inspector with FortiGate.
+  A Terraform script to demonstrate [FortiOS provider](https://registry.terraform.io/providers/fortinetdev/fortios/latest/docs) to configure a FortiGate VM in AWS.
+
+  Running the code below with a FortiDemo instance will request a connection to the Security Fabric. The user will need to authorize the FortiGate AWS VM from the Fabric Connectors page.
+
+  Additionally, the script will also initiate an AWS Inspector run on the Ubuntu instance in the private subnet.
 
 ## Requirements
 * [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.14
@@ -14,7 +18,7 @@ Terraform deploys the following components:
    - A VPC with two subnets, one private, one public
    - An Internet gateway
    - A NAT gateway
-   - An Ubuntu instance in the private subnet
+   - An Ubuntu 18.04 instance in the private subnet
    - A FortiGate PAYG instance with two NICs, one in each subnet
    - An S3 bucket, to store the config files
    - A security group with no restrictions
