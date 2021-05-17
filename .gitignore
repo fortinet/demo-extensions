@@ -4,14 +4,18 @@ terraform
 terraform.tfvars
 terraform.tfstate
 terraform.tfstate.backup
+.terraform.lock.hcl
 runInspector.py.rendered
+provider.tf
+*.rendered
+*.bak
+terraform_fortios_provider/.terraform.lock.hcl
 
 # project-specific
 **/dist
 **/local
 **/local*
 scripts/clean-code.js
-
 # npm
 **/node_modules
 **/npm-debug.log

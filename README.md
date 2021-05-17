@@ -1,11 +1,16 @@
-# FortiDemo Inspector
+# FortiOS Provider Integration with Terraform
 ## Description
-  A Terraform script to demonstrate AWS Inspector with FortiGate.
+  A Terraform script to demonstrate [FortiOS provider](https://registry.terraform.io/providers/fortinetdev/fortios/latest/docs) to configure a FortiGate VM in AWS.
+
+  Running the code below with a FortiDemo instance will request a connection to the Security Fabric. The user will need to authorize the FortiGate AWS VM from the Fabric Connectors page.
+
+  Additionally, the script will also initiate an AWS Inspector run on the Ubuntu instance in the private subnet.
 
 ## Requirements
-* [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.12
+* [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.14
 * An [AWS access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)
-* FortiOS 6.2.3
+* FortiOS 6.4.4
+* Environment with **expect** tool support https://core.tcl-lang.org/expect/index
 
 
 ## Deployment overview
@@ -13,7 +18,7 @@ Terraform deploys the following components:
    - A VPC with two subnets, one private, one public
    - An Internet gateway
    - A NAT gateway
-   - An Ubuntu instance in the private subnet
+   - An Ubuntu 18.04 instance in the private subnet
    - A FortiGate PAYG instance with two NICs, one in each subnet
    - An S3 bucket, to store the config files
    - A security group with no restrictions
@@ -21,6 +26,8 @@ Terraform deploys the following components:
 
 ## Deployment
 > **Note:** By default the script expects an ssh key at ~/.ssh/id_rsa.pub
+
+> **Note:IPV6** The FortiGate cloud-init data expects an ipv4 address to be added to the trusthost. If you are using ipv6 you will need to adjust the trusthost under config_script set ipv4-trusthost to set ipv6-trusthost
 To deploy the FortiDemo Inspector:
 
   1. Clone the repository.

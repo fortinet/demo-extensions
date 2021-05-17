@@ -3,7 +3,61 @@ provider "aws" {
   access_key = var.access_key
   secret_key = var.secret_key
   region     = var.region
+
 }
+terraform {
+  required_version = "> 0.14.0"
+  required_providers {
+    fortios = {
+      source  = "fortinetdev/fortios"
+      version = "1.10.4"
+    }
+  }
+}
+// Create a Template file with the proper TOKEN and Hostname attributes
+// This allows us to execute the FortiOS provider after the aws_eip and token are generated
+// See the following for more information:
+// https://github.com/hashicorp/terraform/issues/2976
+// https://github.com/hashicorp/terraform/issues/2430
+//
+
+data "template_file" "setup_fortios_provider" {
+  depends_on = [null_resource.test_instance_is_up]
+  template   = file("./terraform_fortios_provider/provider_prerender")
+  vars = {
+    aws_eip       = aws_eip.fortigate_eip.public_ip,
+    token         = data.external.setup_api_key.result.token
+    forti_demo_ip = var.fortidemo_ip,
+    admin_pass    = var.admin_pass
+  }
+}
+// Create the provider TF file.With the template values.
+resource "local_file" "create_fortios_provider_tf_file" {
+  content  = data.template_file.setup_fortios_provider.rendered
+  filename = "${path.module}/terraform_fortios_provider/provider.tf"
+}
+
+data "external" "external_ip" {
+  program = ["bash", "get-external-ip.sh"]
+}
+data "external" "setup_api_key" {
+  depends_on = [local_file.setup_token]
+  program    = ["bash", "./run-set-api-key.sh"]
+}
+
+
+data "template_file" "setup_token" {
+  depends_on = [null_resource.test_instance_is_up]
+  template   = file("./set-api-key.sh")
+  vars = {
+    fortigate_Ip = aws_eip.fortigate_eip.public_ip,
+  }
+}
+resource "local_file" "setup_token" {
+  content  = data.template_file.setup_token.rendered
+  filename = "${path.module}/set-api-key.sh.rendered"
+}
+
 variable "region" {
   type    = string
   default = "us-west-1" //Default Region
@@ -51,17 +105,44 @@ variable "cluster_name" {
 
 //Find aws_eip and replace in config file:
 data "template_file" "setup-nat-eip" {
-  template = "${file("${path.module}/config_script")}"
+  template = file("${path.module}/config_script")
   vars = {
-    aws_eip            = aws_eip.fortigate_eip.public_ip,
-    forti_demo_ip      = var.fortidemo_ip,
-    ubuntu_instance_ip = "10.0.2.100",
-    admin_pass         = var.admin_pass
+    aws_eip       = aws_eip.fortigate_eip.public_ip,
+    forti_demo_ip = var.fortidemo_ip,
+    trusted_host  = data.external.external_ip.result.ipAddress,
+    admin_pass    = var.admin_pass
+  }
+}
+
+resource "null_resource" "test_instance_is_up" {
+  provisioner "remote-exec" {
+    connection {
+      host = aws_eip.fortigate_eip.public_ip
+      user = "admin"
+    }
+  }
+}
+resource "null_resource" "init_fortios_provider" {
+  depends_on = [local_file.create_fortios_provider_tf_file]
+
+
+  provisioner "local-exec" {
+    working_dir = "./terraform_fortios_provider/"
+    command     = "terraform init"
+  }
+}
+resource "null_resource" "execute_fortios_provider" {
+  depends_on = [null_resource.init_fortios_provider]
+
+
+  provisioner "local-exec" {
+    working_dir = "./terraform_fortios_provider/"
+    command     = "terraform apply -auto-approve"
   }
 }
 
 data "template_file" "setup-inspector-run" {
-  template = "${file("./runInspector.py")}"
+  template = file("./runInspector.py")
   vars = {
     template_name = aws_inspector_assessment_template.inspector_template.name,
     template_arn  = aws_inspector_assessment_template.inspector_template.arn,
@@ -69,7 +150,7 @@ data "template_file" "setup-inspector-run" {
   }
 }
 data "template_file" "cloud-init" {
-  template = "${file("./cloud-init.sh")}"
+  template = file("./cloud-init.sh")
   vars = {
     s3_url     = "s3://${aws_s3_bucket.s3_bucket.id}/${aws_s3_bucket_object.config_script.id}"
     region     = var.region
@@ -303,7 +384,8 @@ resource "aws_nat_gateway" "gw" {
   }
 }
 resource "aws_eip" "fortigate_eip_nat_gateway" {
-  vpc = true
+  vpc              = true
+  public_ipv4_pool = "amazon"
   tags = {
     Name    = "${var.cluster_name}-Fortigate-EIP-${random_string.random_name_post.result}"
     Account = data.aws_caller_identity.current.arn
@@ -389,7 +471,7 @@ data "aws_ami" "ubuntu" {
   most_recent = true
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
   owners = ["099720109477"] # Canonical
 }
@@ -444,11 +526,12 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = [aws_instance.fortigate]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-0f54d37e47fa994a0"                      //6.2.3 us-west-1
+  ami                    = "ami-08f558c88d066cd22"                 //6.4.4 GA B1803  us-west-1
   iam_instance_profile   = aws_iam_instance_profile.fortidemo.name //IAM permissions for SDN connector
   availability_zone      = var.az_default
-  instance_type          = "c4.large"
+  instance_type          = "c5.large"
   subnet_id              = aws_subnet.main.id
+  key_name               = aws_key_pair.keypair.key_name
   vpc_security_group_ids = [aws_security_group.allow_all.id]
   user_data              = data.template_file.setup-nat-eip.rendered
   tags = {
@@ -472,7 +555,6 @@ resource "aws_eip_association" "eip_association" {
 
 }
 
-
 //Setup the Inspector
 //specify the tags to look at
 //Do not call env from instance to avoid cyclical condition
@@ -490,7 +572,7 @@ resource "aws_inspector_assessment_target" "inspector_assesment" {
 resource "aws_inspector_assessment_template" "inspector_template" {
   name       = "Inspector-${random_string.random_name_post.result}"
   target_arn = aws_inspector_assessment_target.inspector_assesment.arn
-  duration   = 300
+  duration   = 900
 
   rules_package_arns = ["arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TKgzoVOa"]
 }
@@ -507,4 +589,10 @@ output "InstanceName" {
 }
 output "PrivateIP" {
   value = aws_network_interface.fgt_second_nic.private_ip
+}
+output "data" {
+  value = data.external.external_ip.result
+}
+output "token" {
+  value = data.external.setup_api_key.result.token
 }

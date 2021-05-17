@@ -10,8 +10,8 @@ client = boto3.client('inspector', region_name=region_name)
 def main():
     try:
         response = client.start_assessment_run(
-            assessmentRunName='${template_name}',
-            assessmentTemplateArn='${template_arn}')
+            assessmentTemplateArn='${template_arn}',
+            assessmentRunName='${template_name}')
         print(response)
     except Exception as e:
         print("Error Running Template: ", e)

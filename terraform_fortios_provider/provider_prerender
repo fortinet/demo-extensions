@@ -1,0 +1,55 @@
+terraform {
+  required_providers {
+    fortios = {
+      source = "fortinetdev/fortios"
+      version = "1.10.4"
+    }
+  }
+}
+
+provider "fortios" {
+  hostname = "${aws_eip}"
+  token    = "${token}"
+  insecure = "true"
+}
+
+#CSF Settings
+resource "fortios_system_csf" "csfSettings" {
+  status = "enable"
+  upstream_ip = "10.100.88.1"
+  management_ip = "${aws_eip}"
+  management_port = 443
+  saml_configuration_sync = "default"
+}
+
+resource "fortios_system_admin" "administrator" {
+  accprofile                 = "super_admin"
+  accprofile_override        = "disable"
+  allow_remove_admin_session = "enable"
+  force_password_change      = "disable"
+  guest_auth                 = "disable"
+  hidden                     = 0
+  name                       = "cloudadmin"
+  password                   = "${admin_pass}"
+  password_expire            = "0000-00-00 00:00:00"
+  peer_auth                  = "disable"
+  radius_vdom_override       = "disable"
+  remote_auth                = "disable"
+  two_factor                 = "disable"
+  wildcard                   = "disable"
+  vdom {
+    name = "root"
+  }
+}
+
+#VPN IPsec phase1-interface
+resource "fortios_vpnipsec_phase1interface" "FortiDEMOphase1" {
+  name = "FortiDEMO"
+  interface = "port1"
+  peertype = "any"
+  net_device = "enable"
+  proposal = "aes128-sha256 aes256-sha256 aes128-sha1 aes256-sha1"
+  wizard_type = "static-fortigate"
+  remote_gw = "${forti_demo_ip}"
+  psksecret = "fortidemo"
+}
