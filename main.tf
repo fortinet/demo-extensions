@@ -6,7 +6,7 @@ provider "aws" {
 
 }
 terraform {
-  required_version = "> 0.14.0"
+  required_version = "0.14.4"
   required_providers {
     fortios = {
       source  = "fortinetdev/fortios"
@@ -526,7 +526,7 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = [aws_instance.fortigate]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-08f558c88d066cd22"                 //6.4.4 GA B1803  us-west-1
+  ami                    = "ami-0109010188b5b573b"                 //6.4.5 GA B1828  us-west-1
   iam_instance_profile   = aws_iam_instance_profile.fortidemo.name //IAM permissions for SDN connector
   availability_zone      = var.az_default
   instance_type          = "c5.large"
