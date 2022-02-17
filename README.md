@@ -7,7 +7,7 @@
   Additionally, the script will also initiate an AWS Inspector run on the Ubuntu instance in the private subnet.
 
 ## Requirements
-* [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.14
+* [Terraform](https://learn.hashicorp.com/terraform/getting-started/install.html) 0.14.4
 * An [AWS access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)
 * FortiOS 6.4.4
 * Environment with **expect** tool support https://core.tcl-lang.org/expect/index
