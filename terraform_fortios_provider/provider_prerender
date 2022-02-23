@@ -2,7 +2,7 @@ terraform {
   required_providers {
     fortios = {
       source = "fortinetdev/fortios"
-      version = "1.10.4"
+      version = "1.14.0"
     }
   }
 }
@@ -13,12 +13,23 @@ provider "fortios" {
   insecure = "true"
 }
 
+
+#Hostname
+resource "fortios_system_global" "hostname" {
+  hostname  = "FortiDEMO_AWS"
+  management_ip = "${aws_eip}"
+  management_port_use_admin_sport = "disable"
+  management_port = 443
+}
+
 #CSF Settings
 resource "fortios_system_csf" "csfSettings" {
+    depends_on = [
+    fortios_system_global.hostname
+  ]
   status = "enable"
-  upstream_ip = "10.100.88.1"
-  management_ip = "${aws_eip}"
-  management_port = 443
+  upstream = "10.100.88.1"
+  group_name = "fabric"
   saml_configuration_sync = "default"
 }
 
