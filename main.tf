@@ -10,7 +10,7 @@ terraform {
   required_providers {
     fortios = {
       source  = "fortinetdev/fortios"
-      version = "1.10.4"
+      version = "1.14.0"
     }
   }
 }
@@ -152,7 +152,7 @@ data "template_file" "setup-inspector-run" {
 data "template_file" "cloud-init" {
   template = file("./cloud-init.sh")
   vars = {
-    s3_url     = "s3://${aws_s3_bucket.s3_bucket.id}/${aws_s3_bucket_object.config_script.id}"
+    s3_url     = "s3://${aws_s3_bucket.s3_bucket.id}/${aws_s3_object.config_script.id}"
     region     = var.region
     private_ip = aws_network_interface.fgt_second_nic.private_ip //secondary nic IP
   }
@@ -453,7 +453,6 @@ resource "aws_route_table_association" "public-subnet-secondary" {
 
 resource "aws_s3_bucket" "s3_bucket" {
   bucket = "${var.cluster_name}-s3-bucket-${random_string.random_name_post.result}"
-  acl    = "public-read"
   tags = {
     Name    = "${var.cluster_name}-s3-${random_string.random_name_post.result}"
     Account = data.aws_caller_identity.current.arn
@@ -461,7 +460,12 @@ resource "aws_s3_bucket" "s3_bucket" {
   }
 }
 
-resource "aws_s3_bucket_object" "config_script" {
+resource "aws_s3_bucket_acl" "s3_bucket_acl" {
+  bucket = aws_s3_bucket.s3_bucket.id
+  acl    = "public-read"
+}
+
+resource "aws_s3_object" "config_script" {
   bucket = aws_s3_bucket.s3_bucket.id
   key    = "runInspector.py"
   source = "${path.module}/runInspector.py.rendered"
@@ -526,7 +530,7 @@ resource "aws_network_interface" "fgt_second_nic" {
   depends_on = [aws_instance.fortigate]
 }
 resource "aws_instance" "fortigate" {
-  ami                    = "ami-0109010188b5b573b"                 //6.4.5 GA B1828  us-west-1
+  ami                    = "ami-082652dab4c2b2b08"                 //7.0.5 GA B304 us-west-1
   iam_instance_profile   = aws_iam_instance_profile.fortidemo.name //IAM permissions for SDN connector
   availability_zone      = var.az_default
   instance_type          = "c5.large"
